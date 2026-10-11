@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "m365-copilot-openai-adapter"
+version = "0.1.0"
+description = "OpenAI-compatible adapter for Microsoft 365 Copilot Chat API (Sub2API upstream)"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "httpx>=0.27",
+  "msal>=1.31",
+  "pydantic>=2.7",
+  "pydantic-settings>=2.3",
+  "click>=8.1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8",
+  "pytest-asyncio>=0.23",
+]
+
+[project.scripts]
+m365-adapter = "cli.main:cli"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app", "cli"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["."]

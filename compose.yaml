@@ -1,0 +1,32 @@
+# M365 Copilot Adapter + Sub2API 同网络部署示例。
+# 用法：
+#   1. cp .env.example .env 并填写 ADAPTER_API_KEY、AZURE_CLIENT_ID
+#   2. docker compose up -d --build
+#   3. docker compose exec m365-copilot-adapter m365-adapter login   # 容器内完成设备代码登录
+#
+# 网络说明（重要）：
+#   - 若你的 Sub2API 也是 Docker 部署，把下面 networks 改成 Sub2API 所在的网络名
+#     （docker network ls 查看，sub2api 常见为 sub2api-network 或 <目录名>_default），
+#     然后 Sub2API 账户的 base_url 填 http://m365-copilot-adapter:8000/v1
+#   - 若 Sub2API 不在 Docker 里，删除下方 networks 配置，base_url 改用
+#     http://host.docker.internal:8000/v1（Mac/Windows）或宿主机 IP（Linux）
+services:
+  m365-copilot-adapter:
+    build: .
+    container_name: m365-copilot-adapter
+    env_file: .env
+    volumes:
+      - adapter-data:/data        # token cache 持久化（含 refresh token，勿泄露备份）
+    ports:
+      - "127.0.0.1:8000:8000"     # 同网络内 Sub2API 可直接走容器名，无需对外暴露
+    restart: unless-stopped
+    networks:
+      - sub2api
+
+volumes:
+  adapter-data:
+
+networks:
+  sub2api:
+    name: sub2api-network         # ← 改成你 Sub2API 的实际网络名
+    external: true
