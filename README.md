@@ -90,6 +90,61 @@ Sub2API 与本服务不在同一网络时，请将 Base URL 替换为实际可�
 
 创建账户后将其挂入分组并为用户密钥授权，客户端请求时 model 填写映射前名称（如 `copilot`）即可。
 
+## 在个人项目中直接调用
+
+Sub2API 不是必须的中间层。本服务本身是标准的 OpenAI 兼容接口，个人项目可以直接用官方 SDK 调用，适合自用脚本、小工具、后端服务等场景。
+
+Python：
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://127.0.0.1:8000/v1",
+    api_key="<ADAPTER_API_KEY>",
+)
+
+resp = client.chat.completions.create(
+    model="m365-copilot-chat",
+    messages=[{"role": "user", "content": "总结一下我今天未读的邮件"}],
+)
+print(resp.choices[0].message.content)
+
+# 流式
+for chunk in client.chat.completions.create(
+    model="m365-copilot-chat",
+    messages=[{"role": "user", "content": "我明天有什么会？"}],
+    stream=True,
+):
+    print(chunk.choices[0].delta.content or "", end="")
+
+# 多轮会话：通过 metadata.session_id 延续同一个 Copilot 会话
+resp = client.chat.completions.create(
+    model="m365-copilot-chat",
+    messages=[{"role": "user", "content": "接着上面说"}],
+    extra_body={"metadata": {"session_id": "my-project-session-001"}},
+)
+```
+
+Node.js：
+
+```js
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "http://127.0.0.1:8000/v1",
+  apiKey: "<ADAPTER_API_KEY>",
+});
+
+const resp = await client.chat.completions.create({
+  model: "m365-copilot-chat",
+  messages: [{ role: "user", content: "你好" }],
+});
+console.log(resp.choices[0].message.content);
+```
+
+默认配置只监听 `127.0.0.1`，即仅本机项目可调。项目部署到其他机器时，将 `.env` 中 `HOST` 改为 `0.0.0.0`（或直接用 Docker 部署到服务器），客户端填写对应地址即可。跨机器调用建议放在内网或加反向代理 HTTPS，不要把端口直接暴露到公网。
+
 ## 参数支持情况
 
 | OpenAI 参数 | 状态 | 说明 |
